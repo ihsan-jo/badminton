@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Badminton Tournament</title>
+<style>
+  :root {
+    --bg: #f4f6f8; --card: #ffffff; --text: #1b2430; --muted: #6b7684;
+    --line: #e2e6ea; --accent: #2f5fb3; --accent-soft: #e8eefa; --win: #0a7d4f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #11161c; --card: #1a2129; --text: #e8edf2; --muted: #93a0ae;
+      --line: #2a333d; --accent: #7fa6ff; --accent-soft: #1f2a3d; --win: #3ccf8e;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { padding: 20px 16px 4px; max-width: 960px; margin: 0 auto; }
+  h1 { margin: 0; font-size: 1.5rem; }
+  .sub { color: var(--muted); font-size: .85rem; margin-top: 4px; }
+  nav { position: sticky; top: 0; z-index: 1; background: var(--bg); border-bottom: 1px solid var(--line); }
+  nav div { max-width: 960px; margin: 0 auto; padding: 8px 16px; display: flex; gap: 6px; overflow-x: auto; }
+  nav a { color: var(--accent); text-decoration: none; font-weight: 600; font-size: .9rem;
+          padding: 6px 12px; border-radius: 999px; background: var(--accent-soft); white-space: nowrap; }
+  main { max-width: 960px; margin: 0 auto; padding: 0 16px 48px; }
+  h2 { font-size: 1.05rem; margin: 28px 0 10px; scroll-margin-top: 60px; }
+  h3 { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 16px 0 8px; }
+  .box { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { padding: 9px 6px; text-align: center; border-bottom: 1px solid var(--line); font-size: .92rem; }
+  th { font-size: .75rem; color: var(--muted); font-weight: 600; text-transform: uppercase; }
+  tr:last-child td { border-bottom: 0; }
+  td.team, th.team { text-align: left; }
+  td.team { font-weight: 500; }
+  td.pts { font-weight: 700; }
+  tr.qual td:first-child { box-shadow: inset 3px 0 0 var(--win); }
+  .note { color: var(--muted); font-size: .8rem; margin-top: 8px; line-height: 1.5; }
+  @media (max-width: 520px) { .hide-sm { display: none; } th, td { padding: 8px 4px; font-size: .85rem; } }
+  .grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr)); }
+  .match { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
+  .meta { display: flex; justify-content: space-between; font-size: .78rem; color: var(--muted); margin-bottom: 6px; }
+  .row { display: flex; align-items: center; gap: 6px; padding: 3px 0; }
+  .name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .name.tbd { color: var(--muted); font-style: italic; }
+  .row.winner .name { color: var(--win); font-weight: 700; }
+  .g { width: 28px; text-align: center; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .g.won { color: var(--text); font-weight: 700; }
+  .filter { margin: 0 0 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: .9rem; }
+  select { font: inherit; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--card); color: var(--text); max-width: 100%; }
+  .error { background: #fde8e6; color: #8a1c12; padding: 10px 14px; border-radius: 8px; margin-top: 16px; }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">Badminton Tournament</h1>
+  <div class="sub" id="status">Loading…</div>
+</header>
+<nav><div>
+  <a href="#standings">Standings</a><a href="#knockout">Knockout</a><a href="#matches">Group matches</a>
+</div></nav>
+<main>
+  <div id="err"></div>
+  <h2 id="standings">Standings</h2>
+  <div class="box"><table>
+    <thead><tr><th>#</th><th class="team">Team</th><th>Play</th><th>Win</th><th>Loss</th>
+      <th class="hide-sm">Game Diff</th><th class="hide-sm">Score Diff</th><th>Point</th></tr></thead>
+    <tbody id="table"></tbody>
+  </table></div>
+  <div class="note" id="criteria"></div>
+
+  <h2 id="knockout">Knockout</h2>
+  <div id="ko"></div>
+
+  <h2 id="matches">Group matches</h2>
+  <div class="filter"><label for="teamFilter">Show team:</label>
+    <select id="teamFilter"><option value="">All teams</option></select></div>
+  <div class="grid" id="group"></div>
+</main>
+
+<script>
+// ===== SETTINGS =====
+const TOURNAMENT_NAME = "Badminton Tournament";
+const SHEET_ID = "";          // long ID from the Google Sheet URL; leave empty to see demo data
+const SHEET_TAB = "Matches";  // tab name inside the sheet
+const POINTS_FOR_WIN = 1;     // points a team gets for winning a match
+const POINTS_FOR_LOSS = 0;
+const TOP_N_QUALIFY = 4;      // how many teams go to the semifinals
+// ====================
+
+const DEMO_CSV = `No,Stage,Team A,Team B,G1 A,G1 B,G2 A,G2 B,G3 A,G3 B
+1,Group,Harry - Syahrul,Apraz - Afif,21,13,30,28,,
+2,Group,Andy - Ahmad,Amang - Defri,30,28,21,9,,
+3,Group,Ikhfi - Dito,Bayu - Novan,21,9,23,25,17,21
+4,Group,Cholis - Faisal,Arkan - Randhy,25,23,21,10,,
+5,Group,Andy - Ahmad,Harry - Syahrul,9,21,25,23,16,21
+6,Group,Apraz - Afif,Bayu - Novan,17,21,21,14,21,15
+7,Group,Cholis - Faisal,Amang - Defri,21,10,21,17,,
+8,Group,Ikhfi - Dito,Arkan - Randhy,21,13,28,26,,
+9,Group,Harry - Syahrul,Bayu - Novan,29,27,28,30,21,13
+10,Group,Cholis - Faisal,Andy - Ahmad,21,15,21,9,,
+11,Group,Apraz - Afif,Arkan - Randhy,24,26,21,18,21,14
+12,Group,Ikhfi - Dito,Amang - Defri,15,21,26,24,11,21
+13,Group,Cholis - Faisal,Harry - Syahrul,29,27,12,21,21,16
+14,Group,Bayu - Novan,Arkan - Randhy,21,13,24,22,,
+15,Group,Ikhfi - Dito,Andy - Ahmad,21,18,26,24,,
+16,Group,Apraz - Afif,Amang - Defri,14,21,13,21,,
+17,Group,Harry - Syahrul,Arkan - Randhy,16,21,30,28,21,14
+18,Group,Ikhfi - Dito,Cholis - Faisal,21,23,25,27,,
+19,Group,Bayu - Novan,Amang - Defri,22,24,21,13,21,11
+20,Group,Apraz - Afif,Andy - Ahmad,12,21,27,29,,
+21,Group,Ikhfi - Dito,Harry - Syahrul,21,15,25,27,21,15
+22,Group,Arkan - Randhy,Amang - Defri,8,21,28,30,,
+23,Group,Apraz - Afif,Cholis - Faisal,16,21,21,9,21,13
+24,Group,Bayu - Novan,Andy - Ahmad,11,21,13,21,,
+25,Group,Harry - Syahrul,Amang - Defri,11,21,21,19,21,15
+26,Group,Apraz - Afif,Ikhfi - Dito,21,8,11,21,15,21
+27,Group,Arkan - Randhy,Andy - Ahmad,21,13,29,27,,
+28,Group,Bayu - Novan,Cholis - Faisal,11,21,21,17,18,21
+1,Semifinal,Rank 1,Rank 4,26,28,21,11,18,21
+2,Semifinal,Rank 2,Rank 3,21,19,21,9,,
+3,3rd Place,SF 1 Loser,SF 2 Loser,,,,,,
+4,Final,SF 1 Winner,SF 2 Winner,,,,,,`;
+
+function parseCSV(text) {
+  const rows = []; let row = [], field = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"' && text[i + 1] === '"') { field += '"'; i++; }
+      else if (c === '"') q = false;
+      else field += c;
+    } else if (c === '"') q = true;
+    else if (c === ",") { row.push(field); field = ""; }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i + 1] === "\n") i++;
+      row.push(field); rows.push(row); row = []; field = "";
+    } else field += c;
+  }
+  if (field || row.length) { row.push(field); rows.push(row); }
+  const head = rows.shift().map(h => h.trim());
+  return rows.filter(r => r.some(v => v.trim())).map(r =>
+    Object.fromEntries(head.map((h, i) => [h, (r[i] || "").trim()])));
+}
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// Turn a sheet row into a match with its games and result.
+function toMatch(r) {
+  const games = [1, 2, 3]
+    .map(n => [r[`G${n} A`], r[`G${n} B`]])
+    .filter(([a, b]) => a !== "" && b !== "" && !isNaN(a) && !isNaN(b))
+    .map(([a, b]) => [Number(a), Number(b)]);
+  const gA = games.filter(([a, b]) => a > b).length;
+  const gB = games.filter(([a, b]) => b > a).length;
+  const done = gA === 2 || gB === 2;
+  return { no: r.No, stage: (r.Stage || "Group").trim(), a: r["Team A"], b: r["Team B"],
+           games, gA, gB, done, winner: done ? (gA > gB ? "a" : "b") : null };
+}
+
+function standings(group) {
+  const teams = {};
+  const t = name => teams[name] ??= { name, play: 0, win: 0, loss: 0, gf: 0, ga: 0, sf: 0, sa: 0, pts: 0 };
+  group.forEach(m => { t(m.a); t(m.b); });
+  group.filter(m => m.done).forEach(m => {
+    const A = t(m.a), B = t(m.b);
+    A.play++; B.play++;
+    A.gf += m.gA; A.ga += m.gB; B.gf += m.gB; B.ga += m.gA;
+    m.games.forEach(([x, y]) => { A.sf += x; A.sa += y; B.sf += y; B.sa += x; });
+    const [W, L] = m.winner === "a" ? [A, B] : [B, A];
+    W.win++; L.loss++; W.pts += POINTS_FOR_WIN; L.pts += POINTS_FOR_LOSS;
+  });
+  const list = Object.values(teams);
+  list.forEach(x => { x.gd = x.gf - x.ga; x.sd = x.sf - x.sa; });
+
+  // Rank by points; break ties by head-to-head among the tied teams, then game diff, then score diff.
+  list.sort((x, y) => y.pts - x.pts);
+  const out = [];
+  for (let i = 0; i < list.length;) {
+    let j = i; while (j < list.length && list[j].pts === list[i].pts) j++;
+    const tied = list.slice(i, j), names = new Set(tied.map(x => x.name));
+    const h2h = Object.fromEntries(tied.map(x => [x.name, 0]));
+    group.filter(m => m.done && names.has(m.a) && names.has(m.b))
+         .forEach(m => h2h[m.winner === "a" ? m.a : m.b]++);
+    tied.sort((x, y) => h2h[y.name] - h2h[x.name] || y.gd - x.gd || y.sd - x.sd);
+    out.push(...tied); i = j;
+  }
+  return out;
+}
+
+function matchCard(m, label) {
+  const row = side => {
+    const name = side === "a" ? m.a : m.b, known = !m[side + "Tbd"];
+    const cells = m.games.map(([a, b]) => {
+      const mine = side === "a" ? a : b, theirs = side === "a" ? b : a;
+      return `<span class="g ${mine > theirs ? "won" : ""}">${mine}</span>`;
+    }).join("");
+    return `<div class="row ${m.winner === side ? "winner" : ""}">
+      <span class="name ${known ? "" : "tbd"}">${esc(name || "TBD")}</span>${cells}</div>`;
+  };
+  return `<div class="match"><div class="meta"><span>${esc(label)}</span>
+    <span>${m.done ? "Final" : m.games.length ? "In progress" : "Not played"}</span></div>
+    ${row("a")}${row("b")}</div>`;
+}
+
+function render(rows) {
+  const all = rows.map(toMatch);
+  const group = all.filter(m => m.stage.toLowerCase() === "group");
+  const ko = all.filter(m => m.stage.toLowerCase() !== "group");
+  const table = standings(group);
+  const groupDone = group.length > 0 && group.every(m => m.done);
+  const played = group.filter(m => m.done).length;
+
+  document.getElementById("table").innerHTML = table.map((x, i) => `
+    <tr class="${groupDone && i < TOP_N_QUALIFY ? "qual" : ""}"><td>${i + 1}</td><td class="team">${esc(x.name)}</td>
+    <td>${x.play}</td><td>${x.win}</td><td>${x.loss}</td>
+    <td class="hide-sm">${x.gd > 0 ? "+" : ""}${x.gd}</td><td class="hide-sm">${x.sd > 0 ? "+" : ""}${x.sd}</td>
+    <td class="pts">${x.pts}</td></tr>`).join("");
+  document.getElementById("criteria").textContent =
+    `${played} of ${group.length} group matches played. Ranking: points (win = ${POINTS_FOR_WIN}), then head-to-head, game difference, score difference. Top ${TOP_N_QUALIFY} go to the semifinals.`;
+
+  // Fill in knockout placeholders such as "Rank 1" or "SF 1 Winner" once they are decided.
+  const semis = ko.filter(m => m.stage.toLowerCase() === "semifinal");
+  const resolve = (m, side) => {
+    const raw = m[side];
+    let r = raw.match(/^rank\s*(\d+)$/i);
+    if (r) { if (groupDone && table[r[1] - 1]) return table[r[1] - 1].name; m[side + "Tbd"] = true; return raw; }
+    r = raw.match(/^sf\s*(\d+)\s*(winner|loser)$/i);
+    if (r) {
+      const sf = semis[r[1] - 1];
+      if (sf && sf.done) {
+        const win = r[2].toLowerCase() === "winner";
+        return (sf.winner === "a") === win ? sf.a : sf.b;
+      }
+      m[side + "Tbd"] = true; return raw;
+    }
+    return raw;
+  };
+  ko.forEach(m => { m.a = resolve(m, "a"); m.b = resolve(m, "b"); });
+
+  const stages = [...new Set(ko.map(m => m.stage))];
+  document.getElementById("ko").innerHTML = stages.map(s => {
+    const ms = ko.filter(m => m.stage === s);
+    return `<h3>${esc(s)}</h3><div class="grid">${ms.map(m =>
+      matchCard(m, ms.length > 1 ? `${s} ${m.no}` : s)).join("")}</div>`;
+  }).join("") || '<div class="note">No knockout matches in the sheet.</div>';
+
+  const sel = document.getElementById("teamFilter");
+  if (sel.options.length === 1)
+    table.map(x => x.name).sort().forEach(n => sel.add(new Option(n, n)));
+  const drawGroup = () => {
+    const f = sel.value;
+    document.getElementById("group").innerHTML = group
+      .filter(m => !f || m.a === f || m.b === f)
+      .map(m => matchCard(m, `Match ${m.no}`)).join("");
+  };
+  sel.onchange = drawGroup;
+  drawGroup();
+}
+
+async function load() {
+  try {
+    let csv = DEMO_CSV;
+    if (SHEET_ID) {
+      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}&t=${Date.now()}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Could not read the sheet (HTTP " + res.status + ")");
+      csv = await res.text();
+    }
+    render(parseCSV(csv));
+    document.getElementById("status").textContent =
+      (SHEET_ID ? "" : "Demo data · ") + "Loaded " + new Date().toLocaleString() + " · reload the page for the latest scores";
+  } catch (e) {
+    document.getElementById("err").innerHTML =
+      `<div class="error">${esc(e.message)}. Check the sheet is shared as "Anyone with the link can view".</div>`;
+  }
+}
+
+document.getElementById("title").textContent = TOURNAMENT_NAME;
+document.title = TOURNAMENT_NAME;
+load();
+</script>
+</body>
+</html>
