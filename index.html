@@ -261,21 +261,41 @@ function render(rows) {
   drawGroup();
 }
 
+// Read the sheet with a <script> tag (JSONP). A plain fetch() is blocked by the browser
+// when the page is opened from disk, and Google does not always allow it from other sites.
+function readSheet() {
+  return new Promise((resolve, reject) => {
+    const cb = "sheetCallback" + Date.now();
+    const s = document.createElement("script");
+    const done = () => { delete window[cb]; s.remove(); };
+    const timer = setTimeout(() => { done(); reject(new Error("The sheet took too long to respond")); }, 15000);
+    window[cb] = resp => {
+      clearTimeout(timer); done();
+      if (resp.status === "error") {
+        reject(new Error("Google Sheets error: " + resp.errors.map(e => e.detailed_message || e.message).join("; ")));
+        return;
+      }
+      const cols = resp.table.cols.map(c => (c.label || "").trim());
+      resolve(resp.table.rows.map(r => Object.fromEntries(cols.map((c, i) => {
+        const cell = r.c[i];
+        return [c, cell && cell.v != null ? String(cell.v).trim() : ""];
+      }))).filter(r => Object.values(r).some(v => v)));
+    };
+    s.onerror = () => { clearTimeout(timer); done(); reject(new Error("Could not read the sheet")); };
+    s.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json;responseHandler:${cb}` +
+            `&headers=1&sheet=${encodeURIComponent(SHEET_TAB)}&t=${Date.now()}`;
+    document.head.appendChild(s);
+  });
+}
+
 async function load() {
   try {
-    let csv = DEMO_CSV;
-    if (SHEET_ID) {
-      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}&t=${Date.now()}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Could not read the sheet (HTTP " + res.status + ")");
-      csv = await res.text();
-    }
-    render(parseCSV(csv));
+    render(SHEET_ID ? await readSheet() : parseCSV(DEMO_CSV));
     document.getElementById("status").textContent =
       (SHEET_ID ? "" : "Demo data · ") + "Loaded " + new Date().toLocaleString() + " · reload the page for the latest scores";
   } catch (e) {
     document.getElementById("err").innerHTML =
-      `<div class="error">${esc(e.message)}. Check the sheet is shared as "Anyone with the link can view".</div>`;
+      `<div class="error">${esc(e.message)}. Check the sheet is shared as "Anyone with the link can view" and the tab is named "${esc(SHEET_TAB)}".</div>`;
   }
 }
 
