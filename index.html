@@ -29,6 +29,12 @@
   h2 { font-size: 1.05rem; margin: 28px 0 10px; scroll-margin-top: 60px; }
   h3 { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 16px 0 8px; }
   .box { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .scroll table { min-width: 560px; }
+  /* Keep rank and team name in view while the numbers scroll sideways */
+  .scroll th:nth-child(1), .scroll td:nth-child(1) { position: sticky; left: 0; width: 32px; min-width: 32px; background: var(--card); }
+  .scroll th:nth-child(2), .scroll td:nth-child(2) { position: sticky; left: 32px; background: var(--card); box-shadow: 1px 0 0 var(--line); white-space: nowrap; }
+  .hint { display: none; color: var(--muted); font-size: .78rem; margin-top: 6px; }
   table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
   th, td { padding: 9px 6px; text-align: center; border-bottom: 1px solid var(--line); font-size: .92rem; }
   th { font-size: .75rem; color: var(--muted); font-weight: 600; text-transform: uppercase; }
@@ -38,7 +44,7 @@
   td.pts { font-weight: 700; }
   tr.qual td:first-child { box-shadow: inset 3px 0 0 var(--win); }
   .note { color: var(--muted); font-size: .8rem; margin-top: 8px; line-height: 1.5; }
-  @media (max-width: 520px) { .hide-sm { display: none; } th, td { padding: 8px 4px; font-size: .85rem; } }
+  @media (max-width: 600px) { .hint { display: block; } th, td { padding: 8px 6px; font-size: .85rem; } }
   .grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr)); }
   .match { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
   .meta { display: flex; justify-content: space-between; font-size: .78rem; color: var(--muted); margin-bottom: 6px; }
@@ -65,11 +71,12 @@
 <main>
   <div id="err"></div>
   <h2 id="standings">Standings</h2>
-  <div class="box"><table>
+  <div class="box scroll"><table>
     <thead><tr><th>#</th><th class="team">Team</th><th>Play</th><th>Win</th><th>Loss</th>
-      <th class="hide-sm">Game Diff</th><th class="hide-sm">Score Diff</th><th>Point</th></tr></thead>
+      <th>Game Diff</th><th>Score Diff</th><th>Point</th></tr></thead>
     <tbody id="table"></tbody>
   </table></div>
+  <div class="hint">Swipe the table sideways to see all columns.</div>
   <div class="note" id="criteria"></div>
 
   <h2 id="knockout">Knockout</h2>
@@ -217,7 +224,7 @@ function render(rows) {
   document.getElementById("table").innerHTML = table.map((x, i) => `
     <tr class="${groupDone && i < TOP_N_QUALIFY ? "qual" : ""}"><td>${i + 1}</td><td class="team">${esc(x.name)}</td>
     <td>${x.play}</td><td>${x.win}</td><td>${x.loss}</td>
-    <td class="hide-sm">${x.gd > 0 ? "+" : ""}${x.gd}</td><td class="hide-sm">${x.sd > 0 ? "+" : ""}${x.sd}</td>
+    <td>${x.gd > 0 ? "+" : ""}${x.gd}</td><td>${x.sd > 0 ? "+" : ""}${x.sd}</td>
     <td class="pts">${x.pts}</td></tr>`).join("");
   document.getElementById("criteria").textContent =
     `${played} of ${group.length} group matches played. Ranking: points (win = ${POINTS_FOR_WIN}), then head-to-head, game difference, score difference. Top ${TOP_N_QUALIFY} go to the semifinals.`;
