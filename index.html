@@ -316,6 +316,8 @@ function render(rows) {
     const f = sel.value;
     document.getElementById("group").innerHTML = group
       .filter(m => !f || m.a === f || m.b === f)
+      // Played (or started) matches first, then the rest; each part keeps match-number order.
+      .sort((x, y) => (y.games.length > 0) - (x.games.length > 0))
       .map(m => matchCard(m, `Match ${m.no}`)).join("");
   };
   sel.onchange = drawGroup;
