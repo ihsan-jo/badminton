@@ -91,6 +91,24 @@
   .filter { margin: 0 0 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: .9rem; }
   select { font: inherit; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line);
            background: var(--card); color: var(--text); max-width: 100%; }
+  .edit-btn { margin-top: 8px; width: 100%; padding: 7px; border-radius: 8px; border: 1px dashed var(--line);
+              background: transparent; color: var(--accent); font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer; }
+  .edit-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+  dialog { border: 1px solid var(--line); border-radius: 14px; background: var(--card); color: var(--text);
+           padding: 18px; width: min(380px, calc(100vw - 32px)); }
+  dialog::backdrop { background: rgba(0, 0, 0, .5); }
+  dialog h3 { margin: 0 0 12px; color: var(--text); text-transform: none; letter-spacing: 0; font-size: 1rem; }
+  .sc { display: grid; grid-template-columns: 1fr 56px 56px 56px; gap: 8px; align-items: center; font-size: .9rem; }
+  .sc .hd { color: var(--muted); font-size: .75rem; text-align: center; }
+  .sc .tm { overflow-wrap: anywhere; font-weight: 500; }
+  .sc input { width: 100%; padding: 8px 4px; text-align: center; font: inherit; border-radius: 8px;
+              border: 1px solid var(--line); background: var(--bg); color: var(--text); }
+  .dlg-msg { min-height: 1.2em; font-size: .82rem; color: var(--err-text); margin: 10px 0 0; }
+  .dlg-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+  .dlg-btns button { padding: 8px 16px; border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer;
+                     border: 1px solid var(--line); background: var(--card); color: var(--text); }
+  .dlg-btns .primary { background: var(--accent); border-color: var(--accent); color: var(--card); }
+  .dlg-btns button:disabled { opacity: .6; cursor: default; }
   .error { background: var(--err-bg); color: var(--err-text); padding: 10px 14px; border-radius: 8px; margin-top: 16px; }
 </style>
 </head>
@@ -139,6 +157,24 @@
   <div class="grid" id="group"></div>
 </main>
 
+<dialog id="scoreDlg">
+  <form method="dialog" id="scoreForm">
+    <h3 id="dlgTitle">Enter score</h3>
+    <div class="sc">
+      <span></span><span class="hd">Game 1</span><span class="hd">Game 2</span><span class="hd">Game 3</span>
+      <span class="tm" id="dlgA"></span>
+      <input inputmode="numeric" name="s0"><input inputmode="numeric" name="s2"><input inputmode="numeric" name="s4">
+      <span class="tm" id="dlgB"></span>
+      <input inputmode="numeric" name="s1"><input inputmode="numeric" name="s3"><input inputmode="numeric" name="s5">
+    </div>
+    <p class="dlg-msg" id="dlgMsg"></p>
+    <div class="dlg-btns">
+      <button type="button" id="dlgCancel">Cancel</button>
+      <button type="submit" class="primary" id="dlgSave">Save</button>
+    </div>
+  </form>
+</dialog>
+
 <script>
 // ===== SETTINGS =====
 const TOURNAMENT_NAME = "Badminton Tournament";
@@ -147,6 +183,7 @@ const SHEET_TAB = "Matches";  // tab name inside the sheet
 const POINTS_FOR_WIN = 1;     // points a team gets for winning a match
 const POINTS_FOR_LOSS = 0;
 const TOP_N_QUALIFY = 4;      // how many teams go to the semifinals
+const SCRIPT_URL = "";        // Apps Script web app URL that saves scores; leave empty to hide the score buttons
 // ====================
 
 const DEMO_CSV = `No,Stage,Team A,Team B,G1 A,G1 B,G2 A,G2 B,G3 A,G3 B
@@ -215,7 +252,7 @@ function toMatch(r) {
   const gA = games.filter(([a, b]) => a > b).length;
   const gB = games.filter(([a, b]) => b > a).length;
   const done = gA === 2 || gB === 2;
-  return { no: r.No, stage: (r.Stage || "Group").trim(), a: r["Team A"], b: r["Team B"],
+  return { row: r, no: r.No, stage: (r.Stage || "Group").trim(), a: r["Team A"], b: r["Team B"],
            games, gA, gB, done, winner: done ? (gA > gB ? "a" : "b") : null };
 }
 
@@ -261,11 +298,16 @@ function matchCard(m, label) {
   };
   return `<div class="match"><div class="meta"><span>${esc(label)}</span>
     <span>${m.done ? "Final" : m.games.length ? "In progress" : "Not played"}</span></div>
-    ${row("a")}${row("b")}</div>`;
+    ${row("a")}${row("b")}${SCRIPT_URL && !m.aTbd && !m.bTbd
+      ? `<button class="edit-btn" type="button" data-stage="${esc(m.stage)}" data-no="${esc(m.no)}">${m.games.length ? "Edit score" : "Enter score"}</button>` : ""}</div>`;
 }
 
+let currentRows = [], shownMatches = [];
+
 function render(rows) {
+  currentRows = rows;
   const all = rows.map(toMatch);
+  shownMatches = all;
   const group = all.filter(m => m.stage.toLowerCase() === "group");
   const ko = all.filter(m => m.stage.toLowerCase() !== "group");
   const table = standings(group);
@@ -350,6 +392,51 @@ function readSheet() {
     document.head.appendChild(s);
   });
 }
+
+// ----- Score entry -----
+const dlg = document.getElementById("scoreDlg"), form = document.getElementById("scoreForm");
+const dlgMsg = document.getElementById("dlgMsg"), saveBtn = document.getElementById("dlgSave");
+const SCORE_KEYS = ["G1 A", "G1 B", "G2 A", "G2 B", "G3 A", "G3 B"];
+let editing = null;
+
+document.addEventListener("click", e => {
+  const btn = e.target.closest(".edit-btn");
+  if (!btn) return;
+  const m = shownMatches.find(x => x.stage === btn.dataset.stage && String(x.no) === btn.dataset.no);
+  if (!m) return;
+  editing = m;
+  document.getElementById("dlgTitle").textContent = `${m.stage === "Group" ? "Match" : m.stage} ${m.no}`;
+  document.getElementById("dlgA").textContent = m.a;
+  document.getElementById("dlgB").textContent = m.b;
+  SCORE_KEYS.forEach((k, i) => form.elements["s" + i].value = m.row[k] || "");
+  dlgMsg.textContent = ""; saveBtn.disabled = false; saveBtn.textContent = "Save";
+  dlg.showModal();
+});
+document.getElementById("dlgCancel").onclick = () => dlg.close();
+
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+  const scores = SCORE_KEYS.map((k, i) => form.elements["s" + i].value.trim());
+  for (let g = 0; g < 3; g++) {
+    const [a, b] = [scores[g * 2], scores[g * 2 + 1]];
+    if ((a === "") !== (b === "")) { dlgMsg.textContent = `Game ${g + 1} needs a score for both teams.`; return; }
+    if ([a, b].some(v => v !== "" && !/^\d{1,2}$/.test(v))) { dlgMsg.textContent = "Scores must be whole numbers."; return; }
+  }
+  saveBtn.disabled = true; saveBtn.textContent = "Saving…"; dlgMsg.textContent = "";
+  try {
+    // Sent as plain text so the browser doesn't need a CORS preflight, which Apps Script can't answer.
+    const res = await fetch(SCRIPT_URL, { method: "POST",
+      body: JSON.stringify({ stage: editing.stage, no: editing.no, scores }) });
+    const out = await res.json();
+    if (!out.ok) throw new Error(out.error || "Save failed");
+    SCORE_KEYS.forEach((k, i) => editing.row[k] = scores[i]);
+    dlg.close();
+    render(currentRows);
+  } catch (err) {
+    dlgMsg.textContent = "Couldn't save: " + err.message;
+    saveBtn.disabled = false; saveBtn.textContent = "Save";
+  }
+});
 
 async function load() {
   try {

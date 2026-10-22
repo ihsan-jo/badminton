@@ -60,3 +60,19 @@ Share that link (or a QR code of it) with everyone. Visitors see the latest scor
 - **"Could not read the sheet"**: the sheet isn't shared as "Anyone with the link can view", or the tab isn't named `Matches`.
 - **A team shows up twice in the standings**: its name is spelled differently in one of the rows.
 - **Semifinal still shows "Rank 1"**: at least one group match is missing a result.
+
+## 4. Enter scores from the website (optional)
+
+Anyone with the link can then enter or fix scores straight on the website. Every change is recorded in a **Log** tab in the sheet.
+
+1. In the Google Sheet, open **Extensions > Apps Script**.
+2. Delete what's in the editor, paste everything from `apps-script.gs`, and click **Save**.
+3. Click **Deploy > New deployment**. Click the gear next to "Select type" and pick **Web app**.
+4. Set **Execute as: Me** and **Who has access: Anyone**, then click **Deploy**.
+5. Google asks you to authorize. If it says "Google hasn't verified this app", click **Advanced > Go to ... (unsafe)**. It's your own script, so this is expected.
+6. Copy the **Web app URL** (ends in `/exec`) and put it in `index.html`:
+   ```js
+   const SCRIPT_URL = "https://script.google.com/macros/s/.../exec";
+   ```
+
+If you change the script later, use **Deploy > Manage deployments > Edit > Version: New version** so the URL stays the same.
