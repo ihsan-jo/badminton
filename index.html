@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Badminton Tournament</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<link rel="icon" type="image/svg+xml" href="shuttlecock-black.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&display=swap">
@@ -57,7 +58,9 @@
       linear-gradient(90deg, var(--hero-line), var(--hero-line)) 0 70% / 100% 2px no-repeat;
     border: 2px solid var(--hero-line); border-radius: 4px; transform: perspective(700px) rotateX(38deg); }
   .hero .para { position: absolute; color: var(--on-hero); pointer-events: none; will-change: transform; }
-  .hero .para .ic { width: 100%; height: 100%; stroke-width: 1.2; }
+  .hero .para .ic { width: 100%; height: 100%; animation: bob 6s ease-in-out infinite; }
+  .p2 .ic { animation-duration: 4.5s !important; animation-delay: -1s; } .p3 .ic { animation-duration: 7.5s !important; animation-delay: -3s; }
+  @keyframes bob { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-12px) rotate(8deg); } }
   .p1 { width: 120px; height: 120px; right: 6%; top: 18px; opacity: .22; }
   .p2 { width: 54px; height: 54px; right: 34%; top: 92px; opacity: .16; }
   .p3 { width: 80px; height: 80px; left: 52%; bottom: -18px; opacity: .12; }
@@ -68,10 +71,10 @@
   h1 { margin: 0; font-family: var(--display); font-weight: 800; font-size: clamp(2rem, 6vw, 2.9rem);
        line-height: .95; letter-spacing: .01em; text-transform: uppercase; text-wrap: balance; }
   .hero .sub { color: var(--on-hero); opacity: .78; }
-  .stats { display: grid; grid-template-columns: auto minmax(0, max-content) auto; justify-content: start; gap: 8px; margin-top: 18px; }
+  .stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
   .stat { background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .16); border-radius: 12px;
           padding: 8px 12px; min-width: 0; backdrop-filter: blur(6px); }
-  .stat b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--display); font-size: 1.5rem; line-height: 1; font-variant-numeric: tabular-nums; }
+  .stat b { display: block; white-space: nowrap; font-family: var(--display); font-size: 1.5rem; line-height: 1.15; padding-bottom: 2px; font-variant-numeric: tabular-nums; }
   .stat > span { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; opacity: .8; }
   .progress { margin-top: 14px; height: 8px; border-radius: 99px; background: rgba(255, 255, 255, .14); overflow: hidden; }
   .progress i { display: block; height: 100%; width: 0; border-radius: inherit;
@@ -79,7 +82,7 @@
   .ic { width: 1em; height: 1em; flex: none; fill: none; stroke: currentColor; stroke-width: 2;
         stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.125em; }
   .logo { width: 48px; height: 48px; border-radius: 14px; background: rgba(255, 255, 255, .14); color: var(--on-hero);
-          display: grid; place-items: center; font-size: 28px; flex: none; }
+          display: grid; place-items: center; font-size: 34px; flex: none; }
   .theme-btn { width: 40px; height: 40px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .25); background: rgba(255, 255, 255, .1);
                color: var(--on-hero); display: grid; place-items: center; font-size: 20px; cursor: pointer; flex: none; }
   .theme-btn:hover { background: rgba(255, 255, 255, .2); }
@@ -197,7 +200,16 @@
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="i-shuttle" viewBox="0 0 24 24"><circle cx="6" cy="18" r="3"/><path d="M8.2 15.8 14 3.5M8.2 15.8 20.5 10M14 3.5c3.5.5 6 3 6.5 6.5M9.6 15.2 17 5.2M9.3 14.4l11-2.8"/></symbol>
+  <symbol id="i-shuttle" viewBox="0 0 24 24">
+    <g transform="rotate(45 12 12) translate(12 12) scale(.9) translate(-12 -12)">
+      <g fill="currentColor" stroke="none">
+        <path d="M10.19 13.87L5.68 3.20A1.55 1.55 0 0 0 2.92 4.60L8.91 14.53ZM11.91 14.06L10.72 3.60A1.55 1.55 0 0 0 7.68 4.20L10.49 14.34ZM13.51 14.34L16.32 4.20A1.55 1.55 0 0 0 13.28 3.60L12.09 14.06ZM15.09 14.53L21.08 4.60A1.55 1.55 0 0 0 18.32 3.20L13.81 13.87Z"/>
+        <rect x="8.6" y="14.5" width="6.8" height="1.05" rx=".4"/>
+        <rect x="8.6" y="16.1" width="6.8" height="1.05" rx=".4"/>
+        <path d="M8.6 17.7h6.8a3.4 3.4 0 0 1-6.8 0Z"/>
+      </g>
+    </g>
+  </symbol>
   <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M8 17v-5M13 17V8M18 17v-8"/></symbol>
   <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2Z"/></symbol>
   <symbol id="i-medal" viewBox="0 0 24 24"><circle cx="12" cy="15" r="6"/><path d="M8.2 10.3 5 3h4l3 6.5L15 3h4l-3.2 7.3"/></symbol>
@@ -541,6 +553,7 @@ form.addEventListener("submit", async e => {
     SCORE_KEYS.forEach((k, i) => editing.row[k] = scores[i]);
     dlg.close();
     render(currentRows);
+    animateIn(document.querySelectorAll(".match"), true);
     const now = toMatch(editing.row);
     toast(now.done && !wasDone ? `${now.winner === "a" ? editing.a : editing.b} wins!` : "Score saved");
     if (now.done && !wasDone) confetti();
@@ -568,12 +581,17 @@ function countUp(root = document) {
 // Replay a short lift on cards and rows as they scroll into view. They stay visible without it.
 const seen = new WeakSet();
 const io = "IntersectionObserver" in window && !reduceMotion ? new IntersectionObserver(entries => {
-  entries.forEach(en => { if (!en.isIntersecting) return; io.unobserve(en.target);
-    en.target.classList.remove("rise"); void en.target.offsetWidth; en.target.classList.add("rise"); });
+  entries.forEach(en => {
+    const el = en.target;
+    if (!en.isIntersecting) { el.classList.remove("rise"); return; }   // reset so it replays next time
+    if (el.dataset.quiet) { delete el.dataset.quiet; return; }           // already on screen after a save
+    void el.offsetWidth; el.classList.add("rise");
+  });
 }, { rootMargin: "0px 0px -8% 0px" }) : null;
-function animateIn(els) {
+function animateIn(els, quiet = false) {
   if (!io) return;
-  [...els].forEach((el, i) => { if (seen.has(el)) return; seen.add(el); el.style.setProperty("--d", (i % 6) * 0.05 + "s"); io.observe(el); });
+  [...els].forEach((el, i) => { if (seen.has(el)) return; seen.add(el);
+    if (quiet) el.dataset.quiet = 1; el.style.setProperty("--d", (i % 6) * 0.05 + "s"); io.observe(el); });
 }
 
 // Parallax shuttlecocks, sticky-nav shadow and the FAB progress ring, all from one scroll handler.
@@ -630,7 +648,7 @@ async function load() {
   try {
     render(SUPABASE_URL ? await readMatches() : parseCSV(DEMO_CSV));
     countUp();
-    animateIn(document.querySelectorAll(".match, #table tr"));
+    animateIn(document.querySelectorAll(".match"));
     onScroll();
     document.getElementById("status").textContent =
       (SUPABASE_URL ? "" : "Demo data · ") + "Loaded " + new Date().toLocaleString() + " · reload the page for the latest scores";
