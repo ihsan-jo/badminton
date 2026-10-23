@@ -1,5 +1,13 @@
 # Badminton Tournament Website: setup guide
 
+> **Update (Oct 2026):** scores now live in a free **Supabase** database instead of the Google Sheet, because the sheet was slow.
+> Anyone can enter or edit scores with the buttons on each match card. To fix a score or a team name by hand, open the
+> [Supabase dashboard](https://supabase.com/dashboard/project/lvfgvvegnqysiaipyhss/editor) > Table Editor > `matches`.
+> Every score change is recorded in the `score_log` table. The free plan pauses the project after a week with no visits;
+> if the site says it can't load scores, open the dashboard and click **Restore project**.
+> The Google Sheet steps below are kept for reference only.
+
+
 Total cost: free. Time: about 15 minutes.
 
 Organizers type game scores into a Google Sheet. The website reads the sheet each time someone opens or reloads it, then works out the standings and fills in the semifinal, 3rd place and final pairings by itself.
@@ -61,18 +69,3 @@ Share that link (or a QR code of it) with everyone. Visitors see the latest scor
 - **A team shows up twice in the standings**: its name is spelled differently in one of the rows.
 - **Semifinal still shows "Rank 1"**: at least one group match is missing a result.
 
-## 4. Enter scores from the website (optional)
-
-Anyone with the link can then enter or fix scores straight on the website. Every change is recorded in a **Log** tab in the sheet.
-
-1. In the Google Sheet, open **Extensions > Apps Script**.
-2. Delete what's in the editor, paste everything from `apps-script.gs`, and click **Save**.
-3. Click **Deploy > New deployment**. Click the gear next to "Select type" and pick **Web app**.
-4. Set **Execute as: Me** and **Who has access: Anyone**, then click **Deploy**.
-5. Google asks you to authorize. If it says "Google hasn't verified this app", click **Advanced > Go to ... (unsafe)**. It's your own script, so this is expected.
-6. Copy the **Web app URL** (ends in `/exec`) and put it in `index.html`:
-   ```js
-   const SCRIPT_URL = "https://script.google.com/macros/s/.../exec";
-   ```
-
-If you change the script later, use **Deploy > Manage deployments > Edit > Version: New version** so the URL stays the same.
