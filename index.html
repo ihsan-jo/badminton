@@ -184,26 +184,17 @@
            padding: 18px; width: min(380px, calc(100vw - 32px)); }
   dialog::backdrop { background: rgba(0, 0, 0, .5); }
   dialog h3 { outline: none; margin: 0 0 12px; color: var(--text); text-transform: none; letter-spacing: 0; font-size: 1rem; }
-  .sc { display: grid; grid-template-columns: 1fr 56px 56px 56px; gap: 8px; align-items: center; font-size: .9rem; }
+  .sc { display: grid; grid-template-columns: 1fr repeat(3, minmax(52px, 64px)); gap: 8px; align-items: center; font-size: .9rem; }
   .sc .hd { color: var(--muted); font-size: .75rem; text-align: center; }
   .sc .tm { overflow-wrap: anywhere; font-weight: 500; }
   .sc input { width: 100%; padding: 8px 4px; text-align: center; font: inherit; border-radius: 8px;
               border: 1px solid var(--line); background: var(--bg); color: var(--text); }
-  .sc input.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
-  .live { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); display: grid; gap: 10px; }
-  .live-hd { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-  .live-hd b { white-space: nowrap; font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-  .tabs { display: flex; gap: 4px; padding: 3px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); }
-  .tabs button { border: 0; background: none; color: var(--muted); font: inherit; font-size: .8rem; font-weight: 600;
-                 padding: 5px 10px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
-  .tabs button[aria-pressed="true"] { background: var(--accent); color: var(--card); }
-  .ctr { display: grid; grid-template-columns: 1fr auto 3ch auto; gap: 8px; align-items: center; }
-  .ctr .tm { font-weight: 600; overflow-wrap: anywhere; font-size: .9rem; }
-  .ctr .n { font: 800 2rem/1 var(--display); text-align: center; font-variant-numeric: tabular-nums; }
-  .ctr button { min-width: 52px; height: 48px; border-radius: 12px; font: inherit; font-weight: 700; font-size: 1rem; cursor: pointer;
-                border: 1px solid var(--line); background: var(--bg); color: var(--text); touch-action: manipulation; }
-  .ctr button.plus { min-width: 64px; background: var(--accent); border-color: var(--accent); color: var(--card); font-size: 1.15rem; }
-  .ctr button:active { transform: scale(.95); }
+  .cell { display: grid; gap: 4px; }
+  .sc:has(.cell) { row-gap: 16px; }
+  .bump { height: 36px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--card);
+          font: inherit; font-weight: 700; cursor: pointer; touch-action: manipulation; }
+  .bump.minus { background: transparent; color: var(--accent); }
+  .bump:active { transform: scale(.94); }
   .dlg-msg { min-height: 1.2em; font-size: .82rem; color: var(--err-text); margin: 10px 0 0; }
   .dlg-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
   .dlg-btns button { padding: 8px 16px; border-radius: 8px; font: inherit; font-weight: 600; cursor: pointer;
@@ -280,16 +271,9 @@
     <div class="sc">
       <span></span><span class="hd">Game 1</span><span class="hd">Game 2</span><span class="hd">Game 3</span>
       <span class="tm" id="dlgA"></span>
-      <input inputmode="numeric" name="s0"><input inputmode="numeric" name="s2"><input inputmode="numeric" name="s4">
+      <div class="cell"><button type="button" class="bump" data-s="s0" data-d="1" aria-label="Plus one">+1</button><input inputmode="numeric" name="s0"><button type="button" class="bump minus" data-s="s0" data-d="-1" aria-label="Minus one">−1</button></div><div class="cell"><button type="button" class="bump" data-s="s2" data-d="1" aria-label="Plus one">+1</button><input inputmode="numeric" name="s2"><button type="button" class="bump minus" data-s="s2" data-d="-1" aria-label="Minus one">−1</button></div><div class="cell"><button type="button" class="bump" data-s="s4" data-d="1" aria-label="Plus one">+1</button><input inputmode="numeric" name="s4"><button type="button" class="bump minus" data-s="s4" data-d="-1" aria-label="Minus one">−1</button></div>
       <span class="tm" id="dlgB"></span>
-      <input inputmode="numeric" name="s1"><input inputmode="numeric" name="s3"><input inputmode="numeric" name="s5">
-    </div>
-    <div class="live" id="live">
-      <div class="live-hd"><b>Live counter</b>
-        <div class="tabs" id="liveTabs"><button type="button" data-g="0">Game 1</button><button type="button" data-g="1">Game 2</button><button type="button" data-g="2">Game 3</button></div>
-      </div>
-      <div class="ctr"><span class="tm" id="ctrA"></span><button type="button" data-t="0" data-d="-1" aria-label="Minus one">−1</button><span class="n" id="nA">0</span><button type="button" class="plus" data-t="0" data-d="1" aria-label="Plus one">+1</button></div>
-      <div class="ctr"><span class="tm" id="ctrB"></span><button type="button" data-t="1" data-d="-1" aria-label="Minus one">−1</button><span class="n" id="nB">0</span><button type="button" class="plus" data-t="1" data-d="1" aria-label="Plus one">+1</button></div>
+      <div class="cell"><button type="button" class="bump" data-s="s1" data-d="1" aria-label="Plus one">+1</button><input inputmode="numeric" name="s1"><button type="button" class="bump minus" data-s="s1" data-d="-1" aria-label="Minus one">−1</button></div><div class="cell"><button type="button" class="bump" data-s="s3" data-d="1" aria-label="Plus one">+1</button><input inputmode="numeric" name="s3"><button type="button" class="bump minus" data-s="s3" data-d="-1" aria-label="Minus one">−1</button></div><div class="cell"><button type="button" class="bump" data-s="s5" data-d="1" aria-label="Plus one">+1</button><input inputmode="numeric" name="s5"><button type="button" class="bump minus" data-s="s5" data-d="-1" aria-label="Minus one">−1</button></div>
     </div>
     <p class="dlg-msg" id="dlgMsg"></p>
     <div class="dlg-btns">
@@ -546,38 +530,14 @@ document.addEventListener("click", e => {
   SCORE_KEYS.forEach((k, i) => form.elements["s" + i].value = m.row[k] || "");
   dlgMsg.textContent = ""; saveBtn.disabled = false; saveBtn.textContent = "Save";
   dlg.showModal();
-  dlg.dispatchEvent(new Event("open-live"));
 });
 document.getElementById("dlgCancel").onclick = () => dlg.close();
-// Live counter: +1/-1 buttons write into the selected game's two boxes.
-let liveGame = 0;
-const box = (g, t) => form.elements["s" + (g * 2 + t)];
-const num = el => Math.min(99, Math.max(0, parseInt(el.value, 10) || 0));
-const gameOver = (a, b) => (Math.max(a, b) >= 21 && Math.abs(a - b) >= 2) || Math.max(a, b) >= 30;
-function showLive() {
-  document.getElementById("nA").textContent = num(box(liveGame, 0));
-  document.getElementById("nB").textContent = num(box(liveGame, 1));
-  document.querySelectorAll("#liveTabs button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.g === liveGame)));
-  [...form.querySelectorAll(".sc input")].forEach(el => el.classList.toggle("on", Math.floor(+el.name.slice(1) / 2) === liveGame));
-}
-function pickGame(g) { liveGame = g; showLive(); }
-document.getElementById("liveTabs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) pickGame(+b.dataset.g); });
-document.querySelectorAll(".ctr button").forEach(b => b.addEventListener("click", () => {
-  const el = box(liveGame, +b.dataset.t), other = box(liveGame, 1 - +b.dataset.t);
-  el.value = Math.min(99, Math.max(0, num(el) + +b.dataset.d));
+// +1 / -1 buttons around each score box, for counting points live.
+form.addEventListener("click", e => {
+  const b = e.target.closest(".bump"); if (!b) return;
+  const i = +b.dataset.s.slice(1), el = form.elements[b.dataset.s], other = form.elements["s" + (i ^ 1)];
+  el.value = Math.min(99, Math.max(0, (parseInt(el.value, 10) || 0) + +b.dataset.d));
   if (other.value === "") other.value = 0;
-  showLive();
-}));
-form.querySelectorAll(".sc input").forEach(el => {
-  el.addEventListener("focus", () => pickGame(Math.floor(+el.name.slice(1) / 2)));
-  el.addEventListener("input", showLive);
-});
-dlg.addEventListener("open-live", () => {
-  document.getElementById("ctrA").textContent = editing.a;
-  document.getElementById("ctrB").textContent = editing.b;
-  let g = 0;   // start on the first game that isn't finished yet
-  while (g < 2 && box(g, 0).value !== "" && gameOver(num(box(g, 0)), num(box(g, 1)))) g++;
-  pickGame(g);
 });
 
 
